@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>404 Not Found - Schwimmbad Hettenleidelheim</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!--Import Google Icon Font-->
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <!--Import materialize.css-->
+        <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    </head>
+
+   
+   
+
+    
+    <body>
+        
+            <nav>
+                <div class="nav-wrapper light-blue">
+                  <a href="http://schwimmbad-hettenleidelheim.de" class="brand-logo"><img style="padding: 8px 8px;" src="img/logo-transparent-small.png" alt="Förderverein Schwimmbad Hettrum"></a>
+                  
+                </div>   
+            </nav>
+    
+       
+    
+    <br>
+    <center>
+        
+          <div class="col s12 m4 l3">
+            <div class="card center-align">
+              <div class="card-action">
+		<h3>404 Not Found </h3>
+              </div>
+		<div class="card-action">
+                    The requested document was not found on this server.
+                    <br> - <br>
+                    Entweder ist unsere Webseite gerade baden gegangen oder du hast eine falsche Adresse eingegeben... Sicher, dass du dich nicht vertippt hast? Versuche es doch nocheimal von vorne:
+                    <br><br>
+                    <a class="waves-effect waves-light btn light-blue" href="http://schwimmbad-hettenleidelheim.de">Zur Startseite</a>
+                    <br>
+              </div>
+            </div>
+          </div>
+       
+    </center>
+        
+        
+         <footer class="page-footer light-blue">
+          
+          
+          <div class="footer-copyright">
+            <div class="container">
+            © 2017 Förderverein Schwimmbad Hettenleidelheim e.V.
+            </div>
+          </div>
+        </footer>
+        
+    
+    </body>
+    
+
+</html>
+
+<!--
+   - Unfortunately, Microsoft has added a clever new
+   - "feature" to Internet Explorer. If the text of
+   - an error's message is "too small", specifically
+   - less than 512 bytes, Internet Explorer returns
+   - its own error message. You can turn that off,
+   - but it's pretty tricky to find switch called
+   - "smart error messages". That means, of course,
+   - that short error messages are censored by default.
+   - IIS always returns error messages that are long
+   - enough to make Internet Explorer happy. The
+   - workaround is pretty simple: pad the error
+   - message with a big comment like this to push it
+   - over the five hundred and twelve bytes minimum.
+   - Of course, that's exactly what you're reading
+   - right now.
+-->
