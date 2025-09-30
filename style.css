@@ -485,22 +485,22 @@ body {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .header {
         display: none;
     }
 
     .menu-toggle {
-        display: flex;
+        display: flex !important;
+    }
+    
+    .main-content {
+        padding-top: 5rem; /* Add space for fixed menu toggle */
     }
 
     .gallery-grid {
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 1rem;
-    }
-
-    .main-content {
-        padding: 1rem 0.5rem;
     }
 
     .logo-container {
@@ -545,7 +545,7 @@ body {
     }
 }
 
-@media (min-width: 769px) and (max-width: 1024px) {
+@media (min-width: 1025px) and (max-width: 1399px) {
     .gallery-grid {
         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     }
