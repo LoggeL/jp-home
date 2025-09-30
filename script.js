@@ -171,87 +171,85 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Orbital Gallery Layout
+// Sailing Gallery Layout - Floating on waves
 const galleryItems = document.querySelectorAll('.gallery-item');
 const galleryGrid = document.querySelector('.gallery-grid');
-let isOrbiting = false;
-let orbitAnimationId = null;
-let orbitAngleBase = 0;
-let orbitStartTime = 0;
-let orbitCenterX = 0;
-let orbitCenterY = 0;
-let orbitLinesIntervalId = null;
+let isSailing = false;
+let sailAnimationId = null;
+let waveTime = 0;
+let sailStartTime = 0;
+let sailCenterX = 0;
+let sailCenterY = 0;
+let waveLineIntervalId = null;
 
-// Position items in an orbital/spiral pattern
+// Position items in a wave-like sailing pattern
 function positionGalleryItems() {
     const centerX = window.innerWidth / 2;
     const baseY = 400; // Starting Y position
     
     galleryItems.forEach((item, index) => {
-        // Create a spiral pattern with multiple orbits
-        const angle = (index * 137.5) * (Math.PI / 180); // Golden angle for natural distribution
-        const orbit = Math.floor(index / 8) + 1; // Which orbit ring
-        const radius = 250 + (orbit * 180); // Distance from center increases with orbit
-        const yOffset = index * 200; // Vertical spacing for scrolling
+        // Create a wave pattern - items float like boats
+        const waveAngle = (index * 30) * (Math.PI / 180);
+        const waveRadius = 200 + Math.sin(index * 0.5) * 100;
+        const yOffset = index * 180; // Vertical spacing
         
-        // Calculate position
-        const x = centerX + Math.cos(angle) * radius;
-        const y = baseY + yOffset + Math.sin(angle) * (radius * 0.6);
+        // Calculate position with wave effect
+        const x = centerX + Math.cos(waveAngle) * waveRadius;
+        const y = baseY + yOffset + Math.sin(waveAngle * 2) * 40;
         
         // Apply position
-        item.style.left = `${x - 125}px`; // Center the item (125 = half of 250px width)
+        item.style.left = `${x - 125}px`;
         item.style.top = `${y}px`;
         
-        // Add rotation based on angle
-        const rotation = (angle * (180 / Math.PI)) % 360;
-        item.style.transform = `rotate(${rotation * 0.1}deg)`;
+        // Add gentle rocking motion
+        const rockAngle = Math.sin(index * 0.3) * 3;
+        item.style.transform = `rotate(${rockAngle}deg)`;
         
-        // Stagger fade-in animation
+        // Stagger fade-in animation with wave effect
         item.style.opacity = '0';
-        item.style.animation = `orbitalFadeIn 0.8s ease forwards ${index * 0.05}s`;
+        item.style.animation = `sailFadeIn 1s ease forwards ${index * 0.08}s`;
 
-        // Persist layout metadata for orbiting
-        item.dataset.orbitIndex = String(index);
-        item.dataset.orbitRing = String(orbit);
-        item.dataset.orbitRadius = String(120 + orbit * 65); // more compact radii for orbit mode
-        item.dataset.orbitAngle = String(angle);
+        // Persist layout metadata for sailing
+        item.dataset.sailIndex = String(index);
+        item.dataset.waveRadius = String(waveRadius * 0.4);
+        item.dataset.waveAngle = String(waveAngle);
         item.dataset.baseY = String(y);
     });
 }
 
-// Create orbital fade-in animation
+// Create sailing fade-in animation
 const style = document.createElement('style');
 style.textContent = `
-    @keyframes orbitalFadeIn {
+    @keyframes sailFadeIn {
         from {
             opacity: 0;
-            transform: scale(0.5) rotate(0deg);
+            transform: translateY(100px) scale(0.8) rotate(0deg);
         }
         to {
             opacity: 1;
-            transform: scale(1) rotate(var(--rotation, 0deg));
+            transform: translateY(0) scale(1) rotate(var(--rotation, 0deg));
         }
     }
 `;
 document.head.appendChild(style);
 
-// Parallax scroll effect
+// Wave bobbing effect on scroll
 let lastScroll = 0;
 window.addEventListener('scroll', () => {
     const scroll = window.pageYOffset;
     const scrollDelta = scroll - lastScroll;
     
-    if (!isOrbiting) {
+    if (!isSailing) {
         galleryItems.forEach((item, index) => {
-            const speed = 0.3 + (index % 5) * 0.1; // Variable parallax speed
+            const speed = 0.2 + (index % 4) * 0.1;
             const currentTransform = item.style.transform;
             const rotation = parseFloat(currentTransform.match(/rotate\(([^)]+)deg\)/)?.[1] || 0);
             
-            // Apply parallax and rotation on scroll
-            const parallax = scrollDelta * speed;
-            const newRotation = rotation + (scrollDelta * 0.05);
+            // Apply wave bobbing and gentle rocking
+            const bob = Math.sin(scroll * 0.01 + index) * 3;
+            const newRotation = Math.sin(scroll * 0.003 + index * 0.5) * 4;
             
-            item.style.transform = `rotate(${newRotation}deg) translateY(${-parallax}px)`;
+            item.style.transform = `rotate(${newRotation}deg) translateY(${bob}px)`;
         });
     }
     
@@ -267,80 +265,76 @@ window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
         positionGalleryItems();
-        drawConstellationLines();
+        drawWaveLines();
     }, 250);
 });
 
-// Orbit animation around cursor
-function startOrbit() {
-    if (isOrbiting) return;
-    isOrbiting = true;
-    orbitStartTime = performance.now();
-    orbitAngleBase = 0;
-    orbitCenterX = cursorX; // use custom cursor smoothed position
-    orbitCenterY = cursorY + window.pageYOffset; // convert to document Y
-    if (orbitAnimationId) cancelAnimationFrame(orbitAnimationId);
-    orbitAnimationId = requestAnimationFrame(stepOrbit);
-    // Throttle constellation lines redraw during orbit
-    if (!orbitLinesIntervalId) {
-        orbitLinesIntervalId = setInterval(() => {
-            drawConstellationLines();
+// Sailing animation - boats follow the current (cursor)
+function startSailing() {
+    if (isSailing) return;
+    isSailing = true;
+    sailStartTime = performance.now();
+    waveTime = 0;
+    sailCenterX = cursorX;
+    sailCenterY = cursorY + window.pageYOffset;
+    if (sailAnimationId) cancelAnimationFrame(sailAnimationId);
+    sailAnimationId = requestAnimationFrame(stepSailing);
+    if (!waveLineIntervalId) {
+        waveLineIntervalId = setInterval(() => {
+            drawWaveLines();
         }, 150);
     }
 }
 
-function stopOrbit() {
-    isOrbiting = false;
-    if (orbitAnimationId) {
-        cancelAnimationFrame(orbitAnimationId);
-        orbitAnimationId = null;
+function stopSailing() {
+    isSailing = false;
+    if (sailAnimationId) {
+        cancelAnimationFrame(sailAnimationId);
+        sailAnimationId = null;
     }
-    if (orbitLinesIntervalId) {
-        clearInterval(orbitLinesIntervalId);
-        orbitLinesIntervalId = null;
+    if (waveLineIntervalId) {
+        clearInterval(waveLineIntervalId);
+        waveLineIntervalId = null;
     }
-    // Recompute default layout to reset positions
     positionGalleryItems();
-    drawConstellationLines();
+    drawWaveLines();
 }
 
-function stepOrbit(now) {
-    if (!isOrbiting) return;
-    const elapsed = now - orbitStartTime;
-    // progress base angle in radians; slower spin
-    orbitAngleBase = (elapsed / 1000) * 0.6; // 0.6 rad/s
+function stepSailing(now) {
+    if (!isSailing) return;
+    const elapsed = now - sailStartTime;
+    waveTime = (elapsed / 1000) * 0.8;
 
-    // Keep center following the cursor smoothly
-    orbitCenterX = cursorX;
-    orbitCenterY = cursorY + window.pageYOffset;
+    sailCenterX = cursorX;
+    sailCenterY = cursorY + window.pageYOffset;
 
     const itemCount = galleryItems.length;
     galleryItems.forEach((item, index) => {
-        const radius = parseFloat(item.dataset.orbitRadius || '200');
-        const baseAngle = (index * (2 * Math.PI / Math.min(itemCount, 14))) + orbitAngleBase;
-        const phaseJitter = (index % 5) * 0.08;
-        const angle = baseAngle + phaseJitter;
-        const x = orbitCenterX + Math.cos(angle) * radius;
-        const y = orbitCenterY + Math.sin(angle) * (radius * 0.6);
+        const radius = parseFloat(item.dataset.waveRadius || '150');
+        const baseAngle = (index * (2 * Math.PI / Math.min(itemCount, 16))) + waveTime;
+        const waveBob = Math.sin(waveTime * 2 + index * 0.5) * 20;
+        const angle = baseAngle + (index % 3) * 0.1;
+        const x = sailCenterX + Math.cos(angle) * radius;
+        const y = sailCenterY + Math.sin(angle) * (radius * 0.5) + waveBob;
 
         item.style.left = `${x - (item.offsetWidth / 2)}px`;
         item.style.top = `${y - (item.offsetHeight / 2)}px`;
-        item.style.transform = `rotate(${(angle * 180 / Math.PI) * 0.1}deg)`;
+        const rock = Math.sin(waveTime * 3 + index) * 5;
+        item.style.transform = `rotate(${rock}deg)`;
     });
 
-    orbitAnimationId = requestAnimationFrame(stepOrbit);
+    sailAnimationId = requestAnimationFrame(stepSailing);
 }
 
-// Start orbit on hover/focus inside gallery grid
+// Start sailing on hover inside gallery grid
 if (galleryGrid) {
-    galleryGrid.addEventListener('mouseenter', startOrbit);
-    galleryGrid.addEventListener('mouseleave', stopOrbit);
-    // touch move: start orbit when touching grid
-    galleryGrid.addEventListener('pointerdown', startOrbit);
-    galleryGrid.addEventListener('pointerup', stopOrbit);
+    galleryGrid.addEventListener('mouseenter', startSailing);
+    galleryGrid.addEventListener('mouseleave', stopSailing);
+    galleryGrid.addEventListener('pointerdown', startSailing);
+    galleryGrid.addEventListener('pointerup', stopSailing);
 }
 
-// Constellation lines effect
+// Wave connection lines - ropes between boats
 const canvas = document.getElementById('constellation-canvas');
 const ctx = canvas.getContext('2d');
 
@@ -352,14 +346,13 @@ function resizeCanvas() {
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
-function drawConstellationLines() {
+function drawWaveLines() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     const items = Array.from(galleryItems);
-    const maxDistance = 400; // Maximum distance to draw lines
+    const maxDistance = 350;
     const scroll = window.pageYOffset;
     
-    // Get visible items based on scroll position
     const visibleItems = items.filter(item => {
         const rect = item.getBoundingClientRect();
         const itemY = rect.top + scroll;
@@ -381,26 +374,29 @@ function drawConstellationLines() {
             if (distance < maxDistance) {
                 const opacity = 1 - (distance / maxDistance);
                 const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-                gradient.addColorStop(0, `rgba(118, 255, 3, ${opacity * 0.4})`);
-                gradient.addColorStop(1, `rgba(255, 23, 68, ${opacity * 0.4})`);
+                gradient.addColorStop(0, `rgba(0, 172, 193, ${opacity * 0.5})`);
+                gradient.addColorStop(0.5, `rgba(255, 255, 255, ${opacity * 0.3})`);
+                gradient.addColorStop(1, `rgba(79, 195, 247, ${opacity * 0.5})`);
                 
                 ctx.strokeStyle = gradient;
-                ctx.lineWidth = opacity * 2;
+                ctx.lineWidth = opacity * 2.5;
+                ctx.setLineDash([5, 10]);
                 ctx.beginPath();
                 ctx.moveTo(x1, y1 - scroll);
                 ctx.lineTo(x2, y2 - scroll);
                 ctx.stroke();
+                ctx.setLineDash([]);
             }
         });
     });
 }
 
 // Draw lines on scroll and initially
-drawConstellationLines();
-window.addEventListener('scroll', drawConstellationLines, { passive: true });
+drawWaveLines();
+window.addEventListener('scroll', drawWaveLines, { passive: true });
 
 // Redraw after items are positioned
-setTimeout(drawConstellationLines, 1000);
+setTimeout(drawWaveLines, 1000);
 
 // Performance optimization: Preload next/prev images in gallery
 function preloadImages() {
@@ -496,9 +492,9 @@ document.querySelectorAll('.gallery-item, a, button').forEach(element => {
     });
 });
 
-// Mouse trail particles
+// Water droplet trail particles
 const trailParticles = [];
-const maxTrails = 15;
+const maxTrails = 12;
 
 document.addEventListener('mousemove', (e) => {
     if (trailParticles.length < maxTrails) {
@@ -508,13 +504,13 @@ document.addEventListener('mousemove', (e) => {
             position: fixed;
             left: ${e.clientX}px;
             top: ${e.clientY}px;
-            width: 4px;
-            height: 4px;
-            background: radial-gradient(circle, rgba(118, 255, 3, 0.8), transparent);
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, rgba(79, 195, 247, 0.7), rgba(0, 172, 193, 0.3));
             border-radius: 50%;
             pointer-events: none;
             z-index: 9997;
-            animation: trailFade 0.5s ease-out forwards;
+            animation: trailFade 0.6s ease-out forwards;
         `;
         document.body.appendChild(trail);
         trailParticles.push(trail);
@@ -522,7 +518,7 @@ document.addEventListener('mousemove', (e) => {
         setTimeout(() => {
             trail.remove();
             trailParticles.shift();
-        }, 500);
+        }, 600);
     }
 });
 
@@ -532,11 +528,11 @@ trailStyle.textContent = `
     @keyframes trailFade {
         from {
             opacity: 1;
-            transform: scale(1);
+            transform: scale(1) translateY(0);
         }
         to {
             opacity: 0;
-            transform: scale(0);
+            transform: scale(0.3) translateY(8px);
         }
     }
 `;
