@@ -174,6 +174,13 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 // Orbital Gallery Layout
 const galleryItems = document.querySelectorAll('.gallery-item');
 const galleryGrid = document.querySelector('.gallery-grid');
+let isOrbiting = false;
+let orbitAnimationId = null;
+let orbitAngleBase = 0;
+let orbitStartTime = 0;
+let orbitCenterX = 0;
+let orbitCenterY = 0;
+let orbitLinesIntervalId = null;
 
 // Position items in an orbital/spiral pattern
 function positionGalleryItems() {
@@ -202,6 +209,13 @@ function positionGalleryItems() {
         // Stagger fade-in animation
         item.style.opacity = '0';
         item.style.animation = `orbitalFadeIn 0.8s ease forwards ${index * 0.05}s`;
+
+        // Persist layout metadata for orbiting
+        item.dataset.orbitIndex = String(index);
+        item.dataset.orbitRing = String(orbit);
+        item.dataset.orbitRadius = String(120 + orbit * 65); // more compact radii for orbit mode
+        item.dataset.orbitAngle = String(angle);
+        item.dataset.baseY = String(y);
     });
 }
 
@@ -227,17 +241,19 @@ window.addEventListener('scroll', () => {
     const scroll = window.pageYOffset;
     const scrollDelta = scroll - lastScroll;
     
-    galleryItems.forEach((item, index) => {
-        const speed = 0.3 + (index % 5) * 0.1; // Variable parallax speed
-        const currentTransform = item.style.transform;
-        const rotation = parseFloat(currentTransform.match(/rotate\(([^)]+)deg\)/)?.[1] || 0);
-        
-        // Apply parallax and rotation on scroll
-        const parallax = scrollDelta * speed;
-        const newRotation = rotation + (scrollDelta * 0.05);
-        
-        item.style.transform = `rotate(${newRotation}deg) translateY(${-parallax}px)`;
-    });
+    if (!isOrbiting) {
+        galleryItems.forEach((item, index) => {
+            const speed = 0.3 + (index % 5) * 0.1; // Variable parallax speed
+            const currentTransform = item.style.transform;
+            const rotation = parseFloat(currentTransform.match(/rotate\(([^)]+)deg\)/)?.[1] || 0);
+            
+            // Apply parallax and rotation on scroll
+            const parallax = scrollDelta * speed;
+            const newRotation = rotation + (scrollDelta * 0.05);
+            
+            item.style.transform = `rotate(${newRotation}deg) translateY(${-parallax}px)`;
+        });
+    }
     
     lastScroll = scroll;
 }, { passive: true });
@@ -254,6 +270,75 @@ window.addEventListener('resize', () => {
         drawConstellationLines();
     }, 250);
 });
+
+// Orbit animation around cursor
+function startOrbit() {
+    if (isOrbiting) return;
+    isOrbiting = true;
+    orbitStartTime = performance.now();
+    orbitAngleBase = 0;
+    orbitCenterX = cursorX; // use custom cursor smoothed position
+    orbitCenterY = cursorY + window.pageYOffset; // convert to document Y
+    if (orbitAnimationId) cancelAnimationFrame(orbitAnimationId);
+    orbitAnimationId = requestAnimationFrame(stepOrbit);
+    // Throttle constellation lines redraw during orbit
+    if (!orbitLinesIntervalId) {
+        orbitLinesIntervalId = setInterval(() => {
+            drawConstellationLines();
+        }, 150);
+    }
+}
+
+function stopOrbit() {
+    isOrbiting = false;
+    if (orbitAnimationId) {
+        cancelAnimationFrame(orbitAnimationId);
+        orbitAnimationId = null;
+    }
+    if (orbitLinesIntervalId) {
+        clearInterval(orbitLinesIntervalId);
+        orbitLinesIntervalId = null;
+    }
+    // Recompute default layout to reset positions
+    positionGalleryItems();
+    drawConstellationLines();
+}
+
+function stepOrbit(now) {
+    if (!isOrbiting) return;
+    const elapsed = now - orbitStartTime;
+    // progress base angle in radians; slower spin
+    orbitAngleBase = (elapsed / 1000) * 0.6; // 0.6 rad/s
+
+    // Keep center following the cursor smoothly
+    orbitCenterX = cursorX;
+    orbitCenterY = cursorY + window.pageYOffset;
+
+    const itemCount = galleryItems.length;
+    galleryItems.forEach((item, index) => {
+        const radius = parseFloat(item.dataset.orbitRadius || '200');
+        const baseAngle = (index * (2 * Math.PI / Math.min(itemCount, 14))) + orbitAngleBase;
+        const phaseJitter = (index % 5) * 0.08;
+        const angle = baseAngle + phaseJitter;
+        const x = orbitCenterX + Math.cos(angle) * radius;
+        const y = orbitCenterY + Math.sin(angle) * (radius * 0.6);
+
+        item.style.left = `${x - (item.offsetWidth / 2)}px`;
+        item.style.top = `${y - (item.offsetHeight / 2)}px`;
+        item.style.transform = `rotate(${(angle * 180 / Math.PI) * 0.1}deg)`;
+    });
+
+    orbitAnimationId = requestAnimationFrame(stepOrbit);
+}
+
+// Start orbit on hover/focus inside gallery grid
+if (galleryGrid) {
+    galleryGrid.addEventListener('mouseenter', startOrbit);
+    galleryGrid.addEventListener('mouseleave', stopOrbit);
+    // touch move: start orbit when touching grid
+    galleryGrid.addEventListener('pointerdown', startOrbit);
+    galleryGrid.addEventListener('pointerup', stopOrbit);
+}
 
 // Constellation lines effect
 const canvas = document.getElementById('constellation-canvas');
