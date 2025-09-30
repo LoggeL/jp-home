@@ -486,7 +486,7 @@ body {
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-    .header {
+    .top-nav {
         display: none;
     }
 
